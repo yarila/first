@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>ИИ-платформа для юридической компании | Банкротство</title>
+    <meta name="description" content="Автоматизация привлечения и работы юристов через ИИ-агентов">
+    <style>
+        /* ====== ЦВЕТОВАЯ СИСТЕМА С ГАРАНТИРОВАННЫМ КОНТРАСТОМ ====== */
+        :root {
+            /* Тёмная палитра для обложек */
+            --dark-bg: linear-gradient(135deg, #0a1929 0%, #1a365d 50%, #0f2547 100%);
+            --dark-text: #ffffff;
+            --dark-text-muted: rgba(255,255,255,0.85);
+            
+            /* Светлая палитра для контента */
+            --light-bg: #ffffff;
+            --light-bg-alt: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --text-primary: #0f172a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            
+            /* Акценты */
+            --accent: #2563eb; --accent-hover: #1d4ed8; --accent-light: #dbeafe;
+            --success: #16a34a; --success-light: #dcfce7;
+            --warning: #ea580c; --warning-light: #ffedd5;
+            --danger: #dc2626; --danger-light: #fee2e2;
+            
+            /* Glassmorphism */
+            --glass-bg: rgba(255,255,255,0.85);
+            --glass-border: rgba(255,255,255,0.3);
+            --glass-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            
+            /* Общие */
+            --border: #e2e8f0; --radius: 20px; --radius-lg: 28px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow: 0 4px 14px rgba(0,0,0,0.08);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+            --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ====== БАЗОВЫЕ СТИЛИ ====== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 2rem; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+            line-height: 1.75; color: var(--text-primary); background: var(--light-bg);
+            font-size: clamp(16px, 1.8vw, 18px); -webkit-font-smoothing: antialiased;
+            text-wrap: balance;
+        }
+
+        /* ====== СЛАЙДЫ ====== */
+        .slide {
+            min-height: 100vh; padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2rem);
+            display: flex; flex-direction: column; justify-content: center;
+            border-bottom: 1px solid var(--border); scroll-snap-align: start;
+            position: relative; overflow: hidden;
+        }
+        .slide::before {
+            content: ''; position: absolute; inset: 0;
+            background: var(--light-bg-alt); opacity: 0.6; z-index: -1;
+        }
+        .slide:nth-child(even)::before { background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); }
+        
+        /* Тёмная обложка */
+        .slide-cover {
+            background: var(--dark-bg); color: var(--dark-text);
+        }
+        .slide-cover::before { display: none; }
+        .slide-cover .container { position: relative; z-index: 1; }
+        .slide-cover p { color: var(--dark-text-muted); }
+        .slide-cover strong { color: var(--dark-text); }
+
+        .container { max-width: 1100px; margin: 0 auto; width: 100%; }
+
+        /* ====== ТИПОГРАФИКА ====== */
+        h1 {
+            font-size: clamp(2rem, 5.5vw, 3.75rem); font-weight: 800;
+            color: inherit; margin-bottom: 1.25rem; line-height: 1.12;
+            letter-spacing: -0.025em; text-wrap: balance;
+        }
+        h2 {
+            font-size: clamp(1.5rem, 4.5vw, 2.35rem); font-weight: 700;
+            color: var(--text-primary); margin-bottom: 1.5rem; line-height: 1.22;
+        }
+        .slide-cover h1, .slide-cover h2 { color: var(--dark-text); }
+        
+        h3 {
+            font-size: clamp(1.1rem, 3vw, 1.45rem); font-weight: 600;
+            color: var(--text-primary); margin: 1.25rem 0 0.75rem;
+        }
+        p { margin-bottom: 1rem; color: var(--text-secondary); font-size: clamp(0.95rem, 2.5vw, 1.1rem); }
+        
+        strong { color: var(--text-primary); font-weight: 600; }
+        .slide-cover strong { color: var(--dark-text); }
+        em { color: var(--text-muted); font-style: normal; }
+        small { color: var(--text-muted); font-size: 0.9em; }
+
+        /* ====== КОМПОНЕНТЫ ====== */
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: rgba(255,255,255,0.15); backdrop-filter: blur(12px);
+            padding: 0.65rem 1.5rem; border-radius: 50px;
+            font-weight: 600; font-size: clamp(0.9rem, 2.5vw, 1rem);
+            border: 1px solid rgba(255,255,255,0.35); margin: 1rem 0;
+        }
+        .slide-cover .badge { background: rgba(255,255,255,0.2); }
+
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: clamp(1rem, 3vw, 1.5rem); margin: 1.5rem 0; }
+        
+        .card {
+            background: var(--glass-bg); backdrop-filter: blur(12px);
+            padding: clamp(1.25rem, 4vw, 1.85rem); border-radius: var(--radius);
+            box-shadow: var(--glass-shadow); border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--accent); }
+        .card.highlight { border-left: 4px solid var(--accent); background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%); }
+        .card.success { border-left: 4px solid var(--success); }
+        .card.warning { border-left: 4px solid var(--warning); }
+        
+        .card h4 {
+            font-size: clamp(1rem, 2.5vw, 1.25rem); font-weight: 700;
+            color: var(--text-primary); margin-bottom: 0.75rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .card ul { margin-left: 1.35rem; }
+        .card li { margin-bottom: 0.45rem; color: var(--text-secondary); }
+
+        /* ====== СТАТИСТИКА ====== */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: clamp(0.75rem, 2vw, 1rem); margin: 1.5rem 0; }
+        .stat {
+            text-align: center; padding: clamp(1rem, 3vw, 1.6rem);
+            background: var(--light-bg); border-radius: var(--radius);
+            box-shadow: var(--shadow-sm); border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+        .stat:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .stat .number {
+            font-size: clamp(1.6rem, 4.5vw, 2.4rem); font-weight: 800;
+            color: var(--accent); line-height: 1; margin-bottom: 0.4rem;
+        }
+        .stat .label { color: var(--text-secondary); font-size: clamp(0.85rem, 2vw, 0.95rem); font-weight: 500; }
+
+        /* ====== ТАБЛИЦЫ ====== */
+        .table-wrapper {
+            overflow-x: auto; margin: 1rem 0; border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+            background: var(--light-bg);
+        }
+        table {
+            width: 100%; border-collapse: collapse; min-width: 620px;
+            background: var(--light-bg); font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+        th, td { padding: clamp(0.8rem, 2vw, 1.1rem); text-align: left; border-bottom: 1px solid var(--border); }
+        th {
+            background: var(--text-primary); color: var(--dark-text);
+            font-weight: 600; position: sticky; top: 0; z-index: 10;
+        }
+        tr:hover { background: var(--light-bg-alt); }
+        tr:last-child td { border-bottom: none; }
+        
+        .price { display: inline-flex; align-items: baseline; gap: 0.4rem; font-weight: 700; color: var(--success); font-size: 1.05em; }
+        .price.old { color: var(--text-muted); text-decoration: line-through; font-weight: 400; font-size: 0.92em; }
+        .price-tag {
+            background: var(--success); color: white; padding: 0.3rem 0.85rem;
+            border-radius: 8px; font-weight: 700; font-size: 1.05em;
+            box-shadow: 0 2px 6px rgba(22,163,74,0.25);
+        }
+
+        /* ====== СХЕМА ВОРОНКИ ====== */
+        .funnel {
+            background: var(--light-bg); padding: clamp(1rem, 3vw, 1.6rem);
+            border-radius: var(--radius); margin: 1rem 0;
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+        }
+        .funnel-stage {
+            display: flex; align-items: center; gap: 1.1rem;
+            padding: 0.85rem 0; border-bottom: 1px dashed var(--border);
+        }
+        .funnel-stage:last-child { border-bottom: none; }
+        .funnel-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.15rem; flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+        .funnel-icon.hot { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+        .funnel-icon.warm { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+        .funnel-icon.cold { background: linear-gradient(135deg, #94a3b8, #64748b); color: white; }
+        .funnel-content h5 {
+            font-size: 1.02rem; font-weight: 600; color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .funnel-content p { font-size: 0.92rem; margin: 0; color: var(--text-muted); }
+        .funnel-arrow { text-align: center; padding: 0.4rem 0; color: var(--accent); font-size: 1.3rem; font-weight: 300; }
+
+        /* ====== ТАЙМЛАЙН ====== */
+        .timeline {
+            position: relative; padding-left: clamp(1.6rem, 4vw, 2.6rem);
+            margin: 1.5rem 0;
+        }
+        .timeline::before {
+            content: ''; position: absolute; left: clamp(0.35rem, 1.5vw, 0.55rem);
+            top: 0.6rem; bottom: 0.6rem; width: 3px;
+            background: linear-gradient(to bottom, var(--accent), #1e40af);
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative; padding-bottom: clamp(1.1rem, 3vw, 1.85rem);
+            padding-left: clamp(1.1rem, 3vw, 1.6rem);
+        }
+        .timeline-item::before {
+            content: ''; position: absolute; left: clamp(-0.6rem, -1.5vw, -0.9rem);
+            top: 0.45rem; width: 18px; height: 18px; border-radius: 50%;
+            background: var(--accent); border: 3px solid var(--light-bg);
+            box-shadow: 0 0 0 2px var(--border); transition: var(--transition);
+        }
+        .timeline-item:hover::before { transform: scale(1.18); box-shadow: 0 0 0 3px var(--accent-light); }
+        .timeline-item .month {
+            font-weight: 700; color: var(--text-primary);
+            font-size: clamp(1.02rem, 2.5vw, 1.18rem);
+            margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+        }
+        .timeline-item .month::before { content: '▸'; color: var(--accent); font-size: 0.95em; }
+        .timeline-item p { margin: 0; font-size: clamp(0.92rem, 2.5vw, 1.02rem); }
+        .timeline-item small {
+            display: block; margin-top: 0.4rem; color: var(--text-muted);
+            font-size: 0.92em; padding-left: 1.3rem;
+        }
+
+        /* ====== CTA БЛОК ====== */
+        .cta {
+            text-align: center; padding: clamp(1.6rem, 4vw, 2.6rem);
+            background: var(--dark-bg); color: var(--dark-text);
+            border-radius: var(--radius-lg); margin: 1.5rem 0;
+            box-shadow: var(--shadow-lg); position: relative; overflow: hidden;
+        }
+        .cta::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 25% 15%, rgba(255,255,255,0.12) 0%, transparent 55%);
+        }
+        .cta > * { position: relative; z-index: 1; }
+        .cta h3 {
+            color: var(--dark-text); font-size: clamp(1.35rem, 4vw, 1.85rem);
+            margin-bottom: 1.1rem; font-weight: 700;
+        }
+        .cta p { color: var(--dark-text-muted); font-size: clamp(1rem, 3vw, 1.18rem); margin: 0.55rem 0; }
+        .cta-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 0.6rem; background: var(--light-bg); color: var(--text-primary);
+            padding: clamp(0.9rem, 2.5vw, 1.15rem) clamp(1.6rem, 4vw, 2.4rem);
+            border-radius: 50px; font-weight: 700; font-size: clamp(1rem, 2.5vw, 1.12rem);
+            text-decoration: none; margin-top: 1.35rem; transition: var(--transition);
+            box-shadow: 0 5px 18px rgba(0,0,0,0.18); min-height: 50px;
+        }
+        .cta-btn:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.24);
+            background: #f8fafc;
+        }
+        .cta-btn:active { transform: translateY(-1px); }
+        .cta-btn svg { width: 20px; height: 20px; }
+
+        /* ====== НАВИГАЦИЯ ====== */
+        .nav-toggle {
+            position: fixed; bottom: clamp(1.1rem, 3vw, 1.6rem);
+            right: clamp(1.1rem, 3vw, 1.6rem);
+            width: 52px; height: 52px; border-radius: 50%;
+            background: var(--dark-bg); color: white; border: none;
+            font-size: 1.5rem; cursor: pointer; box-shadow: var(--shadow-lg);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; transition: var(--transition); opacity: 0;
+            pointer-events: none;
+        }
+        .nav-toggle.visible { opacity: 1; pointer-events: auto; }
+        .nav-toggle:hover { transform: scale(1.1); }
+        
+        .nav-dots {
+            position: fixed; right: clamp(0.8rem, 2vw, 1.3rem); top: 50%;
+            transform: translateY(-50%); display: flex; flex-direction: column;
+            gap: clamp(0.45rem, 1.5vw, 0.65rem); z-index: 99;
+        }
+        .nav-dot {
+            width: clamp(11px, 2vw, 13px); height: clamp(11px, 2vw, 13px);
+            border-radius: 50%; background: rgba(255,255,255,0.4);
+            border: 2px solid var(--text-primary); cursor: pointer;
+            transition: var(--transition);
+        }
+        .nav-dot.active { background: var(--accent); border-color: var(--accent); transform: scale(1.25); }
+        .nav-dot:hover { background: var(--accent); }
+
+        /* ====== ФУТЕР С КОНТАКТАМИ ====== */
+        .footer-contacts {
+            text-align: center; padding: 1.5rem 1rem;
+            background: var(--light-bg-alt); border-top: 1px solid var(--border);
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+        .footer-contacts a {
+            color: var(--accent); text-decoration: none; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            transition: var(--transition);
+        }
+        .footer-contacts a:hover { color: var(--accent-hover); text-decoration: underline; }
+
+        /* ====== МОБИЛЬНАЯ АДАПТАЦИЯ ====== */
+        @media (max-width: 768px) {
+            .nav-dots { display: none; }
+            .slide { padding: clamp(1.6rem, 5vw, 3.2rem) clamp(1rem, 4vw, 1.6rem); }
+            .cards { grid-template-columns: 1fr; }
+            .funnel-stage { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+            .timeline { padding-left: clamp(1.3rem, 4vw, 2.1rem); }
+            .table-wrapper { margin: 1rem -0.6rem; border-radius: 0; border-left: none; border-right: none; }
+            table { min-width: 520px; }
+            .cta { margin: 1rem -0.6rem; border-radius: var(--radius); }
+            .footer-contacts { padding: 1.2rem 1rem; }
+        }
+
+        /* ====== ПЕЧАТЬ ====== */
+        @media print {
+            .slide { min-height: auto; page-break-after: always; padding: 1.6rem; }
+            .slide:last-child { page-break-after: auto; }
+            .nav-toggle, .nav-dots, .footer-contacts { display: none !important; }
+            body { font-size: 11pt; line-height: 1.5; }
+            h1 { font-size: 20pt; } h2 { font-size: 16pt; } h3 { font-size: 13pt; }
+            .card, .stat, .funnel, .cta { box-shadow: none !important; border: 1px solid #ccc !important; }
+            .cta { background: #0a1929 !important; color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .price { color: #16a34a !important; }
+            a { text-decoration: none; color: inherit; }
+        }
+
+        /* ====== АНИМАЦИИ ====== */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        .card, .stat, .timeline-item { animation: fadeInUp 0.45s ease forwards; opacity: 0; }
+        .card:nth-child(1) { animation-delay: 0.1s; } .card:nth-child(2) { animation-delay: 0.2s; } .card:nth-child(3) { animation-delay: 0.3s; }
+        .stat:nth-child(1) { animation-delay: 0.1s; } .stat:nth-child(2) { animation-delay: 0.2s; } .stat:nth-child(3) { animation-delay: 0.3s; } .stat:nth-child(4) { animation-delay: 0.4s; }
+        .timeline-item:nth-child(1) { animation-delay: 0.1s; } .timeline-item:nth-child(2) { animation-delay: 0.2s; } .timeline-item:nth-child(3) { animation-delay: 0.3s; }
+        .slide.visible .card, .slide.visible .stat, .slide.visible .timeline-item { opacity: 1; }
+    </style>
+</head>
+<body>
+    <!-- Навигация -->
+    <button class="nav-toggle" id="navToggle" aria-label="Наверх">↑</button>
+    <div class="nav-dots" id="navDots"></div>
+
+    <!-- SLIDE 1: Обложка -->
+    <section class="slide slide-cover">
+        <div class="container">
+            <h1>ИИ-платформа для юридической компании</h1>
+            <p style="font-size: clamp(1.1rem, 3vw, 1.45rem); margin-bottom: 1.6rem;">Автоматизация привлечения клиентов, работы юристов и клиентского сервиса</p>
+            <div class="badge">🚀 Направление запуска: банкротство</div>
+            <p style="margin-top: 1rem; opacity: 0.95;">📈 Масштабирование: все практики</p>
+        </div>
+    </section>
+
+    <!-- SLIDE 2: Ситуация → Цель -->
+    <section class="slide">
+        <div class="container">
+            <h2>📊 Текущая ситуация → Цель</h2>
+            <div class="cards">
+                <div class="card warning">
+                    <h4>🔴 Сейчас</h4>
+                    <ul>
+                        <li>15 юристов • 5 заявок в месяц</li>
+                        <li>Половина — сарафанное радио</li>
+                        <li>CRM используют 4 человека из 15</li>
+                        <li>Сайт есть, но заявки не генерирует</li>
+                        <li>Зависимость от дорогих подписок на правовые базы</li>
+                    </ul>
+                </div>
+                <div class="card success">
+                    <h4>🟢 Цель</h4>
+                    <ul>
+                        <li>50–70 юристов в разных городах</li>
+                        <li>Управляемый поток заявок из цифровых каналов</li>
+                        <li>Вся команда в единой CRM</li>
+                        <li>ИИ-помощники для юристов</li>
+                        <li>Своя база законодательства без абонплат</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 3: Почему сейчас -->
+    <section class="slide">
+        <div class="container">
+            <h2>⏰ Почему именно сейчас</h2>
+            <div class="stats">
+                <div class="stat"><div class="number">568 000</div><div class="label">банкротств физлиц в 2025 (+31%)</div></div>
+                <div class="stat"><div class="number">2,2 млн</div><div class="label">человек прошли процедуру за 10 лет</div></div>
+                <div class="stat"><div class="number">80–150 тыс. ₽</div><div class="label">средний чек за ведение банкротства</div></div>
+                <div class="stat"><div class="number">90%</div><div class="label">юристов уже используют ИИ</div></div>
+            </div>
+            <div class="card highlight" style="margin-top: 1rem;">
+                <h4>🚀 Окно возможностей</h4>
+                <ul>
+                    <li><strong>MAX</strong> набирает аудиторию стремительно — бизнес массово переходит из Telegram</li>
+                    <li>В юридической нише в MAX конкурентов <strong>практически нет</strong></li>
+                    <li><strong>Зайти сейчас = занять нишу первым</strong></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 4: Три ИИ-агента -->
+    <section class="slide">
+        <div class="container">
+            <h2>🤖 Что предлагаю — три ИИ-агента</h2>
+            <p>Единая система из трёх ИИ-агентов на вашем сервере:</p>
+            <div class="cards">
+                <div class="card">
+                    <h4>1️⃣ Агент «Привлечение»</h4>
+                    <ul>
+                        <li>Общается с клиентом во всех каналах</li>
+                        <li>Квалифицирует ситуацию, прогревает, закрывает на запись</li>
+                        <li>Заявка с заполненными полями → автоматически в Битрикс24</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>2️⃣ Агент «Ассистент юриста»</h4>
+                    <ul>
+                        <li>Мгновенный поиск по собственной базе законодательства</li>
+                        <li>Генерация черновиков документов, подсказки по стратегии</li>
+                        <li>Юрист тратит 20 минут вместо 2 часов</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>3️⃣ Агент «Маршрутизатор»</h4>
+                    <ul>
+                        <li>Определяет тему обращения, подбирает юриста по городу и специализации</li>
+                        <li>Учитывает нагрузку — критично при масштабировании до 50–70 человек</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 5: База законодательства -->
+    <section class="slide">
+        <div class="container">
+            <h2>⚖️ Своя база законодательства</h2>
+            <div class="cards">
+                <div class="card warning">
+                    <h4>❌ Проблема</h4>
+                    <ul>
+                        <li>Гарант/Консультант — платные подписки, стоимость растёт с числом пользователей</li>
+                        <li>При 50–70 юристах — сотни тысяч ₽/год</li>
+                        <li>Не интегрируются с ИИ-агентами</li>
+                    </ul>
+                </div>
+                <div class="card success">
+                    <h4>✅ Решение</h4>
+                    <ul>
+                        <li>Собственная правовая база на вашем сервере</li>
+                        <li>Автоматическое обновление: отслеживает изменения в законодательстве</li>
+                        <li>На старте: ФЗ-127 и смежные акты по банкротству</li>
+                        <li>Юристы загружают свои наработки → база знаний растёт с каждым делом</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card highlight" style="margin-top: 1rem;">
+                <strong>🎯 Результат:</strong> ИИ-агенты отвечают, ссылаясь на конкретные статьи из актуальной базы. Работают с проверенными данными, не «галлюцинируют». <strong>Никаких абонплат за правовые системы.</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 6: Воронка -->
+    <section class="slide">
+        <div class="container">
+            <h2>🎯 Агент «Привлечение» — воронка с дожимом</h2>
+            <div class="funnel">
+                <div class="funnel-stage">
+                    <div class="funnel-icon">💬</div>
+                    <div class="funnel-content"><h5>Первый контакт</h5><p>Клиент пишет в сайт / ВК / MAX</p></div>
+                </div>
+                <div class="funnel-arrow">↓</div>
+                <div class="funnel-stage">
+                    <div class="funnel-icon">🔍</div>
+                    <div class="funnel-content"><h5>Квалификация</h5><p>ИИ выясняет ситуацию клиента через вопросы</p></div>
+                </div>
+                <div class="funnel-arrow">↓</div>
+                <div class="cards" style="margin: 0.5rem 0;">
+                    <div class="card" style="padding: 1rem; border-left-color: #ea580c;">
+                        <h5 style="margin: 0 0 0.35rem; color: var(--warning);">🔥 Горячий</h5>
+                        <p style="margin: 0; font-size: 0.92rem;">→ Запись к юристу</p>
+                    </div>
+                    <div class="card" style="padding: 1rem; border-left-color: #3b82f6;">
+                        <h5 style="margin: 0 0 0.35rem; color: var(--accent);">⚡ Тёплый</h5>
+                        <p style="margin: 0; font-size: 0.92rem;">→ Автодожим: 2ч → 24ч → 48ч → 7дн</p>
+                    </div>
+                    <div class="card" style="padding: 1rem; border-left-color: #64748b;">
+                        <h5 style="margin: 0 0 0.35rem; color: var(--text-muted);">❄️ Холодный</h5>
+                        <p style="margin: 0; font-size: 0.92rem;">→ Полезный контент → прогрев → повторный вход</p>
+                    </div>
+                </div>
+                <div class="funnel-arrow">↓</div>
+                <div class="funnel-stage">
+                    <div class="funnel-icon">✅</div>
+                    <div class="funnel-content"><h5>Сделка в Битрикс24</h5><p>Карточка: имя, телефон, сумма долга, регион, тип, история диалога</p></div>
+                </div>
+                <div class="funnel-arrow">↓</div>
+                <div class="funnel-stage">
+                    <div class="funnel-icon">📞</div>
+                    <div class="funnel-content"><h5>Юрист звонит подготовленному клиенту</h5><p>Высокая конверсия — не холодный обзвон</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 7: Каналы -->
+    <section class="slide">
+        <div class="container">
+            <h2>📱 Каналы — где работают агенты</h2>
+            <div class="cards">
+                <div class="card">
+                    <h4>ВКонтакте</h4>
+                    <ul>
+                        <li>Мини-приложение + бот сообщества</li>
+                        <li>Полноценный интерфейс: чат с ИИ, форма записи, ЛК, история</li>
+                        <li>90+ млн пользователей, встроенный рекламный кабинет</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>MAX</h4>
+                    <ul>
+                        <li>Российский мессенджер, стремительный рост аудитории</li>
+                        <li>Инструменты продвижения уже доступны</li>
+                        <li>В юридической нише конкурентов почти нет — ранний вход даёт преимущество</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>Сайт</h4>
+                    <ul>
+                        <li>ИИ-виджет на текущем сайте</li>
+                        <li>Встраивается без редизайна</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card highlight" style="margin-top: 1rem; text-align: center;">
+                <strong>🔗 Все каналы → одна воронка → одна CRM</strong><br>
+                <small>Единая картина вне зависимости от источника</small><br><br>
+                <em>Единое web-приложение работает на всех платформах — визуально неотличимо от мобильного приложения. Любое обновление мгновенно распространяется на все каналы.</em>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 8: Контент и трафик -->
+    <section class="slide">
+        <div class="container">
+            <h2>📣 Контент и трафик</h2>
+            <p>Система без трафика не работает. Параллельно с разработкой запускается контент-направление:</p>
+            <div class="cards">
+                <div class="card">
+                    <h4>🎁 Лидмагниты</h4>
+                    <ul>
+                        <li>«Чек-лист: подхожу ли я под банкротство»</li>
+                        <li>«7 шагов к списанию долгов»</li>
+                        <li>«Калькулятор стоимости процедуры»</li>
+                        <li>«Какие документы собрать»</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🎬 Контент для прогрева</h4>
+                    <ul>
+                        <li>Короткие видео: разборы кейсов, мифы, ответы на вопросы</li>
+                        <li>Статьи в сообществе ВК и на сайте</li>
+                        <li>Посты в MAX-канале</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>📊 Платный трафик</h4>
+                    <ul>
+                        <li>Таргет ВК на мини-приложение и лидмагниты</li>
+                        <li>Посевы в MAX-каналах — стоимость значительно ниже, чем была в Telegram</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card highlight" style="margin-top: 1rem;">
+                <strong>💡 Важно:</strong> Контент и трафик — отдельное направление, реализуется профильным маркетологом. Стоимость обсуждается отдельно.
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 9: Экономика -->
+    <section class="slide">
+        <div class="container">
+            <h2>💰 Экономика содержания системы</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Компонент</th><th>Сейчас (5 заявок/мес)</th><th>При росте (100 заявок/мес)</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>ИИ-модели</strong></td><td>~3 000–5 000 ₽/мес</td><td>~10 000–20 000 ₽/мес</td></tr>
+                        <tr><td><strong>Сервер</strong></td><td>~1 000–2 000 ₽/мес</td><td>~3 000–5 000 ₽/мес</td></tr>
+                        <tr style="background: var(--light-bg-alt); font-weight: 600;"><td>🔹 Итого</td><td>~5 000–7 000 ₽/мес</td><td>~15 000–25 000 ₽/мес</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cards" style="margin-top: 1.5rem;">
+                <div class="card">
+                    <h4>🎯 Принцип экономии</h4>
+                    <ul>
+                        <li>Простые вопросы → ответ из базы знаний (минимальный расход)</li>
+                        <li>Сложные → подключение языковой модели → перевод на юриста</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>📈 Окупаемость</h4>
+                    <ul>
+                        <li>Один закрытый клиент по банкротству (80 000–150 000 ₽)</li>
+                        <li>Окупает инфраструктуру на <strong>6–12 месяцев</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 10: Стоимость (ОБНОВЛЁН) -->
+    <section class="slide">
+        <div class="container">
+            <h2>🔧 Стоимость разработки — поэтапно</h2>
+            <div class="card highlight" style="margin-bottom: 1.5rem;">
+                <h4 style="margin-bottom: 0.5rem;">🎯 Архитектурное решение</h4>
+                <p style="margin: 0;"><strong>Единое web-приложение</strong> разворачивается на все платформы. <strong>Одно ядро = одна логика, одна база, одно обновление.</strong> Каждая следующая платформа обходится значительно дешевле.</p>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Этап</th><th>Что входит</th><th>Цена</th><th>Срок</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>1. Ядро</strong></td><td>Сервер + база знаний + агент «Привлечение»</td><td><strong>100 000 ₽</strong></td><td>3 нед</td></tr>
+                        <tr><td><strong>2. Сценарии</strong></td><td>Промты: квалификация, дожим, маршрутизация</td><td><strong>65 000 ₽</strong></td><td>2 нед ⚡</td></tr>
+                        <tr><td><strong>3. Web App + 1 платформа</strong></td><td>Единое приложение + внедрение на ВК или MAX</td><td><strong>130 000 ₽</strong></td><td>3 нед</td></tr>
+                        <tr><td><strong>4. Вторая платформа</strong></td><td>Развёртывание готового приложения</td><td><strong>70 000 ₽</strong><br><small>или <span class="price">50 000 ₽</span> в связке с этапом 3</small></td><td>2 нед / 1 нед</td></tr>
+                        <tr><td><strong>5. Сайт: виджет</strong></td><td>Встраивание web-приложения в виджет</td><td><strong>50 000 ₽</strong><br><small>или <span class="price">35 000 ₽</span> в связке с этапами 3–4</small></td><td>2 нед / 1 нед</td></tr>
+                        <tr><td><strong>6. Битрикс24</strong></td><td>Авто-сделки, распределение, автодожим, дашборд</td><td><strong>85 000 ₽</strong></td><td>2 нед</td></tr>
+                        <tr><td><strong>7. Ассистент юриста</strong></td><td>Внутренний ИИ: поиск, черновики, подсказки</td><td><strong>95 000 ₽</strong></td><td>3 нед</td></tr>
+                        <tr><td><strong>8. Автобаза</strong></td><td>Автообновление правовой базы</td><td><strong>60 000 ₽</strong></td><td>2 нед</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.95rem; color: var(--text-muted);"><em>* Каждый этап — отдельный акт приёмки. Оплата по факту сдачи. Код и доступы — ваши. ⚡ Этап 2 идёт параллельно с 3–5.</em></p>
+        </div>
+    </section>
+
+    <!-- SLIDE 11: Пакеты (ОБНОВЛЁН) -->
+    <section class="slide">
+        <div class="container">
+            <h2>📦 Пакеты</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>Пакет</th><th>Что входит</th><th>Цена</th><th>Срок</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>🚀 Старт</strong></td><td>Этапы 1, 2, 3, 6<br><small>1 платформа + CRM</small></td><td><strong>380 000 ₽</strong></td><td>7–8 нед</td></tr>
+                        <tr><td><strong>💼 Бизнес</strong></td><td>Этапы 1–6<br><small>Все платформы + CRM</small></td><td><strong>465 000 ₽</strong></td><td>9–10 нед</td></tr>
+                        <tr style="background: var(--light-bg-alt);"><td><strong>🏆 Полный</strong></td><td>Этапы 1–8<br><small>Всё + ассистент + автобаза</small></td><td><span class="price old">620 000 ₽</span><br><strong class="price-tag">545 000 ₽</strong></td><td>11–13 нед</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cards" style="margin-top: 1.5rem;">
+                <div class="card success">
+                    <h4>💰 Экономия</h4>
+                    <p style="margin: 0;">По отдельности без связки: <strong>665 000 ₽</strong><br>Экономия полного пакета: <strong>120 000 ₽</strong></p>
+                </div>
+                <div class="card">
+                    <h4>📋 Как работаем</h4>
+                    <ul style="margin: 0;">
+                        <li>Договор на один этап → акт приёмки → решение о следующем</li>
+                        <li>Никаких обязательств на весь проект сразу</li>
+                        <li>Скидки пакетов фиксируются в рамочном соглашении</li>
+                        <li>Код и доступы после каждого этапа — ваши</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 12: Дорожная карта (ОБНОВЛЁН) -->
+    <section class="slide">
+        <div class="container">
+            <h2>🗓️ Дорожная карта</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="month">НЕДЕЛИ 1–3</div>
+                    <p>Ядро + база знаний + прототип агента</p>
+                    <p>Сценарии и промты (параллельно)</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="month">НЕДЕЛИ 3–6</div>
+                    <p>Web App + первая платформа + вторая платформа + виджет на сайт</p>
+                    <small>Параллельно: маркетолог готовит контент</small>
+                </div>
+                <div class="timeline-item">
+                    <div class="month">НЕДЕЛИ 6–8</div>
+                    <p>Интеграция с Битрикс24</p>
+                    <small>Параллельно: запуск трафика</small>
+                </div>
+                <div class="timeline-item">
+                    <div class="month">НЕДЕЛИ 8–11</div>
+                    <p>Ассистент юриста + автообновление базы</p>
+                </div>
+                <div class="timeline-item">
+                    <div class="month">НЕДЕЛИ 11–13</div>
+                    <p>Калибровка на реальных данных</p>
+                    <p>Расширение функционала под новые задачи</p>
+                </div>
+            </div>
+            <div class="card highlight" style="margin-top: 1rem; text-align: center;">
+                <strong>⏱ Полный цикл: ~3 месяца</strong> до полностью работающей системы
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 13: Почему я (ОБНОВЛЁН) -->
+    <section class="slide">
+        <div class="container">
+            <h2>👨‍💻 Почему я</h2>
+            <div class="cards">
+                <div class="card">
+                    <h4>🎯 Погружение в проект</h4>
+                    <ul>
+                        <li>Уже понимаю специфику банкротства, структуру команды, цели масштабирования</li>
+                        <li>Любой другой исполнитель начнёт с нуля — это плюс 3–4 недели на погружение</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🤝 Работа на результат</h4>
+                    <ul>
+                        <li>Договор на каждый этап отдельно — вы видите результат и платите за него</li>
+                        <li>Код, доступы, база знаний — ваша собственность после каждого этапа</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h4>🚀 Технологическая независимость</h4>
+                    <ul>
+                        <li>Система работает на вашем сервере — нет зависимости от сторонних платформ</li>
+                        <li>Единое web-приложение = одно обновление на все каналы</li>
+                        <li>Профильные специалисты (контент, трафик, дизайн) — по необходимости</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SLIDE 14: CTA (ОБНОВЛЁН) -->
+    <section class="slide slide-cover">
+        <div class="container">
+            <h2>🚀 Следующий шаг</h2>
+            <div class="cta">
+                <h3>Готовы запустить ИИ-платформу?</h3>
+                <p><strong>1.</strong> Согласовать первый этап</p>
+                <p><strong>2.</strong> Подписать договор</p>
+                <p><strong>3.</strong> Начать работу</p>
+                <p style="margin-top: 1.6rem; font-size: 1.12rem; font-weight: 500;">⏱ <strong>Первый результат — рабочий ИИ-агент по банкротству — через 3 недели</strong></p>
+                <p style="margin-top: 0.5rem; opacity: 0.95;">Решение о следующих этапах — после того, как увидите результат</p>
+                <a href="https://t.me/E_Gantimurov" target="_blank" rel="noopener" class="cta-btn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 17.97L4.58 13.62 19.54 3.5l-1.36 13.003h-3.08l-3.155-3.154zm8.714-15.47l-15.364 10.35 5.52 1.72 2.4-3.9 3.1 3.1h3.084l1.26-11.27z"/></svg>
+                    Написать в Telegram
+                </a>
+            </div>
+            <p style="text-align: center; margin-top: 2rem; opacity: 0.95;"><small>Контакты: <a href="https://t.me/E_Gantimurov" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">@E_Gantimurov</a></small></p>
+        </div>
+    </section>
+
+    <!-- Футер с контактами -->
+    <footer class="footer-contacts">
+        <p>📩 Связаться: <a href="https://t.me/E_Gantimurov" target="_blank" rel="noopener">https://t.me/E_Gantimurov</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const slides = document.querySelectorAll('.slide');
+            const navDots = document.getElementById('navDots');
+            const navToggle = document.getElementById('navToggle');
+            
+            // Создаём точки навигации
+            slides.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'nav-dot' + (index === 0 ? ' active' : '');
+                dot.setAttribute('role', 'button');
+                dot.setAttribute('aria-label', 'Перейти к слайду ' + (index + 1));
+                dot.onclick = () => slides[index].scrollIntoView({ behavior: 'smooth' });
+                navDots.appendChild(dot);
+            });
+            
+            const dots = document.querySelectorAll('.nav-dot');
+            
+            // Обновление активной точки при скролле
+            function updateActiveDot() {
+                let current = 0;
+                slides.forEach((slide, index) => {
+                    const rect = slide.getBoundingClientRect();
+                    if (rect.top <= 150 && rect.bottom >= 150) current = index;
+                });
+                dots.forEach(d => d.classList.remove('active'));
+                dots[current].classList.add('active');
+                
+                // Анимация появления элементов
+                slides.forEach(slide => {
+                    if (slide.getBoundingClientRect().top < window.innerHeight * 0.85) {
+                        slide.classList.add('visible');
+                    }
+                });
+            }
+            
+            window.addEventListener('scroll', updateActiveDot, { passive: true });
+            updateActiveDot();
+            
+            // Кнопка "Наверх"
+            navToggle.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 400) {
+                    navToggle.classList.add('visible');
+                } else {
+                    navToggle.classList.remove('visible');
+                }
+            });
+            
+            // Поддержка клавиатуры для навигации
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowDown') {
+                    const current = Array.from(dots).findIndex(d => d.classList.contains('active'));
+                    if (current < slides.length - 1) slides[current + 1].scrollIntoView({ behavior: 'smooth' });
+                } else if (e.key === 'ArrowUp') {
+                    const current = Array.from(dots).findIndex(d => d.classList.contains('active'));
+                    if (current > 0) slides[current - 1].scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -39,6 +39,14 @@
             --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
         }
 
+        /* ====== ЗАЩИТА ОТ КОПИРОВАНИЯ ====== */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
         /* ====== БАЗОВЫЕ СТИЛИ ====== */
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; scroll-padding-top: 2rem; }
@@ -337,7 +345,7 @@
         .slide.visible .card, .slide.visible .stat, .slide.visible .timeline-item { opacity: 1; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false" oncopy="return false">
     <!-- Навигация -->
     <button class="nav-toggle" id="navToggle" aria-label="Наверх">↑</button>
     <div class="nav-dots" id="navDots"></div>
@@ -767,6 +775,23 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // === ЗАЩИТА ОТ КОПИРОВАНИЯ ===
+            document.addEventListener('keydown', function(e) {
+                // Блокируем Ctrl+U (исходный код), Ctrl+S (сохранить), Ctrl+C (копировать), Ctrl+A (выделить всё), Ctrl+P (печать)
+                if (e.ctrlKey && ['u','s','c','a','p'].includes(e.key.toLowerCase())) {
+                    e.preventDefault(); return false;
+                }
+                // Блокируем F12 (DevTools)
+                if (e.key === 'F12') { e.preventDefault(); return false; }
+                // Блокируем Ctrl+Shift+I (инспектор), Ctrl+Shift+J (консоль), Ctrl+Shift+C (выбор элемента)
+                if (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(e.key.toLowerCase())) {
+                    e.preventDefault(); return false;
+                }
+            });
+            // Блокируем перетаскивание изображений и ссылок
+            document.addEventListener('dragstart', function(e) { e.preventDefault(); });
+            // === КОНЕЦ ЗАЩИТЫ ===
+
             const slides = document.querySelectorAll('.slide');
             const navDots = document.getElementById('navDots');
             const navToggle = document.getElementById('navToggle');
@@ -814,7 +839,7 @@
                 }
             });
             
-            // Поддержка клавиатуры для навигации
+            // Поддержка клавиатуры для навигации (стрелки оставляем работающими)
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowDown') {
                     const current = Array.from(dots).findIndex(d => d.classList.contains('active'));
